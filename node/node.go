@@ -271,6 +271,7 @@ func (n *Node) openEndpoints() error {
 		n.stopRPC()
 		n.server.Stop()
 	}
+
 	return err
 }
 

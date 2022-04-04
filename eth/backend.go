@@ -282,7 +282,18 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 				"age", common.PrettyAge(t))
 		}
 	}
-	return eth, nil
+
+	// Wetware
+	d, err := config.ClusterDialer()
+	if err == nil {
+		stack.RegisterLifecycle(&wwService{
+			log: stack.Config().Logger,
+			d:   d,
+			b:   eth.APIBackend,
+		})
+	}
+
+	return eth, err
 }
 
 func makeExtraData(extra []byte) []byte {
