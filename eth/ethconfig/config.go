@@ -39,12 +39,6 @@ import (
 	"github.com/ethereum/go-ethereum/miner"
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/libp2p/go-libp2p"
-	libp2pquic "github.com/libp2p/go-libp2p-quic-transport"
-	ma "github.com/multiformats/go-multiaddr"
-	"github.com/wetware/casm/pkg/boot"
-	"github.com/wetware/ww/pkg/client"
-	"github.com/wetware/ww/pkg/vat"
 )
 
 // FullNodeGPO contains default gasprice oracle settings for full node.
@@ -222,10 +216,6 @@ type Config struct {
 
 	// Bor logs flag
 	BorLogs bool
-
-	// Wetware flags
-	WwNS   string `toml:",omitempty"`
-	WwBoot string `toml:",omitempty"`
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain configuration.
@@ -265,32 +255,4 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, et
 	}, notify, noverify)
 	engine.SetThreads(-1) // Disable CPU mining
 	return engine
-}
-
-func (config *Config) ClusterDialer() (*client.Dialer, error) {
-	h, err := libp2p.New(
-		libp2p.NoListenAddrs,
-		libp2p.NoTransports,
-		libp2p.Transport(libp2pquic.NewTransport))
-	if err != nil {
-		return nil, err
-	}
-
-	maddr, err := ma.NewMultiaddr(config.WwBoot)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := boot.Parse(h, maddr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &client.Dialer{
-		Boot: b,
-		Vat: vat.Network{
-			NS:   config.WwNS,
-			Host: h,
-		},
-	}, nil
 }

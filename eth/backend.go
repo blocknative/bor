@@ -283,16 +283,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		}
 	}
 
-	// Wetware
-	d, err := config.ClusterDialer()
-	if err == nil {
-		stack.RegisterLifecycle(&wwService{
-			log: stack.Config().Logger,
-			d:   d,
-			b:   eth.APIBackend,
-		})
-	}
-
 	return eth, err
 }
 
