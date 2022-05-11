@@ -289,10 +289,10 @@ func runCmd(ctx *cli.Context) error {
 	if ctx.GlobalBool(DebugFlag.Name) {
 		if debugLogger != nil {
 			fmt.Fprintln(os.Stderr, "#### TRACE ####")
-			vm.WriteTrace(os.Stderr, debugLogger.StructLogs())
+			logger.WriteTrace(os.Stderr, debugLogger.StructLogs())
 		}
 		fmt.Fprintln(os.Stderr, "#### LOGS ####")
-		vm.WriteLogs(os.Stderr, statedb.Logs())
+		logger.WriteLogs(os.Stderr, statedb.Logs())
 	}
 
 	if bench || ctx.GlobalBool(StatDumpFlag.Name) {
