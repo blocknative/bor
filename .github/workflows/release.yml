@@ -20,6 +20,16 @@ jobs:
         run: |
           github-assets-uploader -logtostderr -f cmd/geth/bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
           github-assets-uploader -logtostderr -f cmd/geth/bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+      - name: Build bootnode
+        run: |
+          cd cmd/bootnode && /opt/go/1.18.1/bin/go build
+          tar -czvf bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz bor
+          echo $(md5sum bootnode | awk '{print $1}') > bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5
+      - name: Upload bootnode to release page
+        run: |
+          github-assets-uploader -logtostderr -f cmd/bootnode/bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          github-assets-uploader -logtostderr -f cmd/bootnode/bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+
   amd64:
     name: Release Go Binary amd64
     runs-on: ubuntu-latest
@@ -32,3 +42,10 @@ jobs:
           goarch: amd64
           project_path: ./cmd/geth
           binary_name: bor
+      - uses: wangyoucao577/go-release-action@v1.26
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: linux
+          goarch: amd64
+          project_path: ./cmd/bootnode
+          binary_name: bootnode
