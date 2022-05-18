@@ -23,7 +23,7 @@ jobs:
       - name: Build bootnode
         run: |
           cd cmd/bootnode && /opt/go/1.18.1/bin/go build
-          tar -czvf bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz bor
+          tar -czvf bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz bootnode
           echo $(md5sum bootnode | awk '{print $1}') > bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5
       - name: Upload bootnode to release page
         run: |
