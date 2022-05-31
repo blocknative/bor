@@ -443,6 +443,7 @@ func (api *API) TraceBlockByNumber(ctx context.Context, number rpc.BlockNumber, 
 // TraceBlockByHash returns the structured logs created during the execution of
 // EVM and returns them as a JSON object.
 func (api *API) TraceBlockByHash(ctx context.Context, hash common.Hash, config *TraceConfig) ([]*txTraceResult, error) {
+	log.Info("TraceBlockByHash", "goCallTracer", *config.Tracer)
 	block, err := api.blockByHash(ctx, hash)
 	if err != nil {
 		return nil, err
