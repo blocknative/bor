@@ -879,6 +879,7 @@ func (api *API) traceTx(ctx context.Context, message core.Message, txctx *Contex
 				return nil, err
 			}
 		}
+		log.Info("goCallTracer", "goCallTracer", *config.Tracer)
 		if *config.Tracer == "goCallTracer" {
 			tracer = NewCallTracer(statedb)
 		} else {
