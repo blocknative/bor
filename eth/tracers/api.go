@@ -776,20 +776,10 @@ func containsTx(block *types.Block, hash common.Hash) bool {
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
 func (api *API) TraceTransaction(ctx context.Context, hash common.Hash, config *TraceConfig) (interface{}, error) {
-	tx, blockHash, blockNumber, index, err := api.backend.GetTransaction(ctx, hash)
-	if tx == nil {
-		// For BorTransaction, there will be no trace available
-		tx, _, _, _ = rawdb.ReadBorTransaction(api.backend.ChainDb(), hash)
-		if tx != nil {
-			return &ethapi.ExecutionResult{
-				StructLogs: make([]ethapi.StructLogRes, 0),
-			}, nil
-		}
-	}
+	_, blockHash, blockNumber, index, err := api.backend.GetTransaction(ctx, hash)
 	if err != nil {
 		return nil, err
 	}
-
 	// It shouldn't happen in practice.
 	if blockNumber == 0 {
 		return nil, errors.New("genesis is not traceable")
