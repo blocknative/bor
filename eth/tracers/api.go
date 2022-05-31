@@ -567,11 +567,13 @@ func (api *API) traceBlock(ctx context.Context, block *types.Block, config *Trac
 	if block.NumberU64() == 0 {
 		return nil, errors.New("genesis is not traceable")
 	}
+	log.Error("traceTx", "goCallTracer", *config.Tracer)
 	parent, err := api.blockByNumberAndHash(ctx, rpc.BlockNumber(block.NumberU64()-1), block.ParentHash())
 	if err != nil {
 		return nil, err
 	}
 	reexec := defaultTraceReexec
+
 	if config != nil && config.Reexec != nil {
 		reexec = *config.Reexec
 	}
