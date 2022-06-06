@@ -877,7 +877,6 @@ func (api *API) traceTx(ctx context.Context, message core.Message, txctx *Contex
 		err       error
 		txContext = core.NewEVMTxContext(message)
 	)
-	log.Error("traceTx", "goCallTracer", *config.Tracer)
 	switch {
 	case config == nil:
 		tracer = logger.NewStructLogger(nil)
