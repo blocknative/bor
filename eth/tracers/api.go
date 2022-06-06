@@ -789,7 +789,6 @@ func (api *API) TraceTransaction(ctx context.Context, hash common.Hash, config *
 	if err != nil {
 		return nil, err
 	}
-
 	// It shouldn't happen in practice.
 	if blockNumber == 0 {
 		return nil, errors.New("genesis is not traceable")
@@ -889,18 +888,22 @@ func (api *API) traceTx(ctx context.Context, message core.Message, txctx *Contex
 				return nil, err
 			}
 		}
-		if t, err := New(*config.Tracer, txctx); err != nil {
-			return nil, err
+		if *config.Tracer == "goCallTracer" {
+			tracer = NewCallTracer(statedb)
 		} else {
+			// Constuct the JavaScript tracer to execute with
+			if tracer, err = New(*config.Tracer, txctx); err != nil {
+				return nil, err
+			}
+			// Handle timeouts and RPC cancellations
 			deadlineCtx, cancel := context.WithTimeout(ctx, timeout)
 			go func() {
 				<-deadlineCtx.Done()
 				if errors.Is(deadlineCtx.Err(), context.DeadlineExceeded) {
-					t.Stop(errors.New("execution timeout"))
+					tracer.(Tracer).Stop(errors.New("execution timeout"))
 				}
 			}()
 			defer cancel()
-			tracer = t
 		}
 	default:
 		tracer = logger.NewStructLogger(config.Config)
@@ -930,6 +933,9 @@ func (api *API) traceTx(ctx context.Context, message core.Message, txctx *Contex
 			ReturnValue: returnVal,
 			StructLogs:  ethapi.FormatLogs(tracer.StructLogs()),
 		}, nil
+
+	case TracerResult:
+		return tracer.GetResult()
 
 	case Tracer:
 		return tracer.GetResult()
