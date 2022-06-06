@@ -443,7 +443,6 @@ func (api *API) TraceBlockByNumber(ctx context.Context, number rpc.BlockNumber, 
 // TraceBlockByHash returns the structured logs created during the execution of
 // EVM and returns them as a JSON object.
 func (api *API) TraceBlockByHash(ctx context.Context, hash common.Hash, config *TraceConfig) ([]*txTraceResult, error) {
-	log.Info("TraceBlockByHash", "goCallTracer", *config.Tracer)
 	block, err := api.blockByHash(ctx, hash)
 	if err != nil {
 		return nil, err
@@ -568,13 +567,11 @@ func (api *API) traceBlock(ctx context.Context, block *types.Block, config *Trac
 	if block.NumberU64() == 0 {
 		return nil, errors.New("genesis is not traceable")
 	}
-	log.Error("traceTx", "goCallTracer", *config.Tracer)
 	parent, err := api.blockByNumberAndHash(ctx, rpc.BlockNumber(block.NumberU64()-1), block.ParentHash())
 	if err != nil {
 		return nil, err
 	}
 	reexec := defaultTraceReexec
-
 	if config != nil && config.Reexec != nil {
 		reexec = *config.Reexec
 	}
@@ -779,7 +776,16 @@ func containsTx(block *types.Block, hash common.Hash) bool {
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
 func (api *API) TraceTransaction(ctx context.Context, hash common.Hash, config *TraceConfig) (interface{}, error) {
-	_, blockHash, blockNumber, index, err := api.backend.GetTransaction(ctx, hash)
+	tx, blockHash, blockNumber, index, err := api.backend.GetTransaction(ctx, hash)
+	if tx == nil {
+		// For BorTransaction, there will be no trace available
+		tx, _, _, _ = rawdb.ReadBorTransaction(api.backend.ChainDb(), hash)
+		if tx != nil {
+			return &ethapi.ExecutionResult{
+				StructLogs: make([]ethapi.StructLogRes, 0),
+			}, nil
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -883,7 +889,6 @@ func (api *API) traceTx(ctx context.Context, message core.Message, txctx *Contex
 				return nil, err
 			}
 		}
-		log.Info("goCallTracer", "goCallTracer", *config.Tracer)
 		if *config.Tracer == "goCallTracer" {
 			tracer = NewCallTracer(statedb)
 		} else {
