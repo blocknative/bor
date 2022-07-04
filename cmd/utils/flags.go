@@ -834,6 +834,20 @@ var (
 		Usage: "InfluxDB organization name (v2 only)",
 		Value: metrics.DefaultConfig.InfluxDBOrganization,
 	}
+
+	// Wetware flags
+	WwNS = cli.StringFlag{
+		Name:   "ns",
+		Usage:  "cluster namespace",
+		Value:  "geth",
+		EnvVar: "WW_NS",
+	}
+
+	WwDiscover = &cli.StringFlag{
+		Name:   "discover,d",
+		Usage:  "bootstrap discovery multiaddr",
+		EnvVar: "WW_DISCOVER",
+	}
 )
 
 // MakeDataDir retrieves the currently requested data directory, terminating
@@ -1812,6 +1826,10 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 			SetDNSDiscoveryDefaults(cfg, params.MainnetGenesisHash)
 		}
 	}
+
+	// Wetware config
+	cfg.WwNamespace = ctx.String("ns")
+	cfg.WwDiscover = ctx.String("discover")
 }
 
 // SetDNSDiscoveryDefaults configures DNS discovery with the given URL if

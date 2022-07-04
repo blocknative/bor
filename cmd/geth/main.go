@@ -212,6 +212,11 @@ var (
 		utils.MetricsInfluxDBBucketFlag,
 		utils.MetricsInfluxDBOrganizationFlag,
 	}
+
+	wetwareFlags = []cli.Flag{
+		utils.WwNS,
+		utils.WwDiscover,
+	}
 )
 
 func init() {
@@ -258,6 +263,7 @@ func init() {
 	app.Flags = append(app.Flags, consoleFlags...)
 	app.Flags = append(app.Flags, debug.Flags...)
 	app.Flags = append(app.Flags, metricsFlags...)
+	app.Flags = append(app.Flags, wetwareFlags...)
 
 	// add bor flags
 	app.Flags = append(app.Flags, utils.BorFlags...)
