@@ -36,10 +36,11 @@ import (
 
 // wetware side-bus, which streams capnp-encoded events over pubsub.
 type wetware struct {
-	Backend ethapi.Backend
-	ChainID *big.Int
-	Enode   string
-	Boot    string
+	Backend   ethapi.Backend
+	ChainID   *big.Int
+	NetworkID uint64
+	Enode     string
+	Boot      string
 
 	// stateful fields
 
@@ -60,12 +61,13 @@ func newWetware(eth *Ethereum, config *ethconfig.Config) *wetware {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-
+	println("networkid", eth.networkID)
 	return &wetware{
-		Backend: eth.APIBackend,
-		ChainID: eth.blockchain.Config().ChainID,
-		Enode:   eth.p2pServer.NodeInfo().Enode,
-		Boot:    config.WwDiscover,
+		Backend:   eth.APIBackend,
+		ChainID:   eth.blockchain.Config().ChainID,
+		NetworkID: eth.networkID,
+		Enode:     eth.p2pServer.NodeInfo().Enode,
+		Boot:      config.WwDiscover,
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -172,7 +174,7 @@ func (ww *wetware) serve(ctx context.Context, n *client.Node) error {
 func (ww *wetware) publishPendingTx(ctx context.Context, n *client.Node, chErr chan error) {
 	events := filters.NewEventSystem(ww.Backend, true)
 
-	topic := network(ww.ChainID) + ".transaction.pending"
+	topic := network(ww.NetworkID) + ".transaction.pending"
 
 	p := publisher{Topic: n.Join(ctx, topic)}
 	defer p.Release()
@@ -235,7 +237,7 @@ func (ww *wetware) publishConfirmedTx(ctx context.Context, n *client.Node, chErr
 	// keep outside of the worker function so that the supervisor can cath any panics
 	events := filters.NewEventSystem(ww.Backend, true)
 
-	topic := network(ww.ChainID) + ".transaction.confirmed"
+	topic := network(ww.NetworkID) + ".transaction.confirmed"
 
 	p := publisher{Topic: n.Join(ctx, topic)}
 	defer p.Release()
@@ -294,7 +296,7 @@ func (ww *wetware) publishConfirmedTx(ctx context.Context, n *client.Node, chErr
 }
 
 func (ww *wetware) publishDroppedTx(ctx context.Context, n *client.Node, chErr chan error) {
-	topic := network(ww.ChainID) + ".transaction.dropped"
+	topic := network(ww.NetworkID) + ".transaction.dropped"
 
 	p := publisher{Topic: n.Join(ctx, topic)}
 	defer p.Release()
@@ -351,7 +353,7 @@ func (ww *wetware) publishDroppedTx(ctx context.Context, n *client.Node, chErr c
 }
 
 func (ww *wetware) publishReplacementTx(ctx context.Context, n *client.Node, chErr chan error) {
-	topic := network(ww.ChainID) + ".transaction.replaced"
+	topic := network(ww.NetworkID) + ".transaction.replaced"
 
 	p := publisher{Topic: n.Join(ctx, topic)}
 	defer p.Release()
@@ -405,9 +407,9 @@ func (ww *wetware) publishReplacementTx(ctx context.Context, n *client.Node, chE
 	}
 }
 
-func network(cid *big.Int) string {
+func network(nid uint64) string {
 	var network string
-	switch cid.Uint64() {
+	switch nid {
 	case 1:
 		network = "main"
 	case 3:
@@ -421,7 +423,7 @@ func network(cid *big.Int) string {
 	case 1337802:
 		network = "kiln"
 	default:
-		panic(fmt.Sprintf("unrecognized network ID %d", cid))
+		panic(fmt.Sprintf("unrecognized network ID %d", nid))
 	}
 
 	return fmt.Sprintf("bn.monitor.ethereum.%s", network)
@@ -457,7 +459,7 @@ func (ww *wetware) publishConfirmedBlock(ctx context.Context, n *client.Node, ch
 	// keep outside of the worker function so that the supervisor can cath any panics
 	events := filters.NewEventSystem(ww.Backend, true)
 
-	topic := network(ww.ChainID) + ".block.confirmed"
+	topic := network(ww.NetworkID) + ".block.confirmed"
 
 	p := publisher{Topic: n.Join(ctx, topic)}
 	defer p.Release()
