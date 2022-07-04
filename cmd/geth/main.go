@@ -221,6 +221,7 @@ var (
 
 func init() {
 	// Initialize the CLI app and start Geth
+	app.Name = "bor"
 	app.Action = geth
 	app.HideVersion = true // we have a command to print the version
 	app.Copyright = "Copyright 2013-2022 The go-ethereum Authors"
