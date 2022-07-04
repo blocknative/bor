@@ -61,7 +61,7 @@ func newWetware(eth *Ethereum, config *ethconfig.Config) *wetware {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	println("networkid", eth.networkID)
+
 	return &wetware{
 		Backend:   eth.APIBackend,
 		ChainID:   eth.blockchain.Config().ChainID,
