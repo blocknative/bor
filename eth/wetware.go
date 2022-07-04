@@ -422,7 +422,7 @@ func network(cid *big.Int) string {
 		panic(fmt.Sprintf("unrecognized network ID %d", cid))
 	}
 
-	return fmt.Sprintf("bn.monitor.ethereum.%s", network)
+	return fmt.Sprintf("bn.monitor.polygon.%s", network)
 }
 
 func (ww *wetware) newEvtTxDetected(tx ethereum.Transaction) (ev ethereum.EvtTxDetected, err error) {
