@@ -1,6 +1,7 @@
 package bor
 
 import (
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -141,4 +142,28 @@ func TestEncodeSigHeaderJaipur(t *testing.T) {
 	// Jaipur NOT enabled and BaseFee set
 	hash = SealHash(h, &params.BorConfig{JaipurBlock: big.NewInt(10)})
 	require.Equal(t, hash, hashWithoutBaseFee)
+}
+
+func TestReadHardcodedSpan(t *testing.T) {
+	// t.Skip()
+
+	var spanArray []*ResponseWithHeight
+
+	if err := json.Unmarshal([]byte(SPANS), &spanArray); err != nil {
+		t.Fatal(err)
+
+	}
+
+	for i, val := range spanArray {
+
+		var tempHeimdallSpan HeimdallSpan
+
+		if err := json.Unmarshal(val.Result, &tempHeimdallSpan); err != nil {
+			t.Fatal(err)
+		}
+
+		t.Log(i, tempHeimdallSpan.ID)
+
+	}
+
 }
