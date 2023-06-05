@@ -130,12 +130,11 @@ func MustSignNewTx(prv *ecdsa.PrivateKey, s Signer, txdata TxData) *Transaction 
 // not match the signer used in the current call.
 func Sender(signer Signer, tx *Transaction) (common.Address, error) {
 	if sc := tx.from.Load(); sc != nil {
-		sigCache := sc.(sigCache)
 		// If the signer used to derive from in a previous
 		// call is not the same as used current, invalidate
 		// the cache.
-		if sigCache.signer.Equal(signer) {
-			return sigCache.from, nil
+		if sc.signer.Equal(signer) {
+			return sc.from, nil
 		}
 	}
 
@@ -143,7 +142,9 @@ func Sender(signer Signer, tx *Transaction) (common.Address, error) {
 	if err != nil {
 		return common.Address{}, err
 	}
-	tx.from.Store(sigCache{signer: signer, from: addr})
+
+	tx.from.Store(&sigCache{signer: signer, from: addr})
+
 	return addr, nil
 }
 
@@ -461,12 +462,48 @@ func (fs FrontierSigner) SignatureValues(tx *Transaction, sig []byte) (r, s, v *
 func (fs FrontierSigner) Hash(tx *Transaction) common.Hash {
 	return rlpHash([]interface{}{
 		tx.Nonce(),
-		tx.GasPrice(),
+		tx.GasPriceRef(),
 		tx.Gas(),
 		tx.To(),
-		tx.Value(),
+		tx.ValueRef(),
 		tx.Data(),
 	})
+}
+
+// FakeSigner implements the Signer interface and accepts unprotected transactions
+type FakeSigner struct{ londonSigner }
+
+var _ Signer = FakeSigner{}
+
+func NewFakeSigner(chainId *big.Int) Signer {
+	signer := NewLondonSigner(chainId)
+	ls, _ := signer.(londonSigner)
+
+	return FakeSigner{londonSigner: ls}
+}
+
+func (f FakeSigner) Sender(tx *Transaction) (common.Address, error) {
+	return f.londonSigner.Sender(tx)
+}
+
+func (f FakeSigner) SignatureValues(tx *Transaction, sig []byte) (r, s, v *big.Int, err error) {
+	return f.londonSigner.SignatureValues(tx, sig)
+}
+
+func (f FakeSigner) ChainID() *big.Int {
+	return f.londonSigner.ChainID()
+}
+
+// Hash returns 'signature hash', i.e. the transaction hash that is signed by the
+// private key. This hash does not uniquely identify the transaction.
+func (f FakeSigner) Hash(tx *Transaction) common.Hash {
+	return f.londonSigner.Hash(tx)
+}
+
+// Equal returns true if the given signer is the same as the receiver.
+func (f FakeSigner) Equal(Signer) bool {
+	// Always return true
+	return true
 }
 
 func decodeSignature(sig []byte) (r, s, v *big.Int) {
