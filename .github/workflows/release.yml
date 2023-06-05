@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build bor
         run: |
-          cd cmd/geth && /opt/go/1.18.1/bin/go build
+          cd cmd/geth && /opt/go/1.19.5/bin/go build
           mv geth bor
           tar -czvf bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz bor
           echo $(md5sum bor | awk '{print $1}') > bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5
@@ -22,7 +22,7 @@ jobs:
           github-assets-uploader -logtostderr -f cmd/geth/bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
       - name: Build bootnode
         run: |
-          cd cmd/bootnode && /opt/go/1.18.1/bin/go build
+          cd cmd/bootnode && /opt/go/1.19.5/bin/go build
           tar -czvf bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz bootnode
           echo $(md5sum bootnode | awk '{print $1}') > bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5
       - name: Upload bootnode to release page
