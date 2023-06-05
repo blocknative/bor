@@ -14,18 +14,20 @@ GORUN = env GO111MODULE=on go run
 GOPATH = $(shell go env GOPATH)
 
 GIT_COMMIT ?= $(shell git rev-list -1 HEAD)
+GIT_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
+GIT_TAG    ?= $(shell git describe --tags `git rev-list --tags="v*" --max-count=1`)
 
 PACKAGE = github.com/ethereum/go-ethereum
 GO_FLAGS += -buildvcs=false
-GO_LDFLAGS += -ldflags "-X ${PACKAGE}/params.GitCommit=${GIT_COMMIT} "
+GO_FLAGS += -ldflags "-X ${PACKAGE}/params.GitCommit=${GIT_COMMIT} -X ${PACKAGE}/params.GitBranch=${GIT_BRANCH} -X ${PACKAGE}/params.GitTag=${GIT_TAG}"
 
 TESTALL = $$(go list ./... | grep -v go-ethereum/cmd/)
 TESTE2E = ./tests/...
-GOTEST = GODEBUG=cgocheck=0 go test $(GO_FLAGS) $(GO_LDFLAGS) -p 1
+GOTEST = GODEBUG=cgocheck=0 go test $(GO_FLAGS) -p 1
 
 bor:
 	mkdir -p $(GOPATH)/bin/
-	go build -o $(GOBIN)/bor $(GO_LDFLAGS) ./cmd/cli/main.go 
+	go build -o $(GOBIN)/bor ./cmd/cli/main.go
 	cp $(GOBIN)/bor $(GOPATH)/bin/
 	@echo "Done building."
 
@@ -57,10 +59,7 @@ ios:
 	@echo "Import \"$(GOBIN)/Geth.framework\" to use the library."
 
 test:
-	$(GOTEST) --timeout 5m -shuffle=on -cover -short -coverprofile=cover.out -covermode=atomic $(TESTALL)
-
-test-txpool-race:
-	$(GOTEST) -run=TestPoolMiningDataRaces --timeout 600m -race -v ./core/
+	$(GOTEST) --timeout 5m -shuffle=on -cover -coverprofile=cover.out $(TESTALL)
 
 test-race:
 	$(GOTEST) --timeout 15m -race -shuffle=on $(TESTALL)
@@ -71,12 +70,12 @@ test-integration:
 escape:
 	cd $(path) && go test -gcflags "-m -m" -run none -bench=BenchmarkJumpdest* -benchmem -memprofile mem.out
 
-# lint:
-# 	@./build/bin/golangci-lint run --config ./.golangci.yml
+lint:
+	@./build/bin/golangci-lint run --config ./.golangci.yml
 
 lintci-deps:
 	rm -f ./build/bin/golangci-lint
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./build/bin v1.50.1
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./build/bin v1.48.0
 
 goimports:
 	goimports -local "$(PACKAGE)" -w .
