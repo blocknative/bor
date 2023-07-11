@@ -52,8 +52,8 @@ jobs:
           echo $(md5sum bor | awk '{print $1}') > bor-$(basename ${GITHUB_REF})-linux-amd64.tar.gz.md5
       - name: Upload bor to release page
         run: |
-          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f cmd/geth/bor-$(basename ${GITHUB_REF})-linux-amd64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
-          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f cmd/geth/bor-$(basename ${GITHUB_REF})-linux-amd64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f build/bin/bor-$(basename ${GITHUB_REF})-linux-amd64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f build/bin/bor-$(basename ${GITHUB_REF})-linux-amd64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
       - name: Build bootnode
         run: |
           cd cmd/bootnode && go build
@@ -61,5 +61,5 @@ jobs:
           echo $(md5sum bootnode | awk '{print $1}') > bootnode-$(basename ${GITHUB_REF})-linux-amd64.tar.gz.md5
       - name: Upload bootnode to release page
         run: |
-          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f build/bin/bootnode-$(basename ${GITHUB_REF})-linux-amd64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
-          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f build/bin/bootnode-$(basename ${GITHUB_REF})-linux-amd64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f cmd/bootnode/bootnode-$(basename ${GITHUB_REF})-linux-amd64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f cmd/bootnode/bootnode-$(basename ${GITHUB_REF})-linux-amd64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
