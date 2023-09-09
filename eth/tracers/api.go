@@ -1321,33 +1321,32 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 		timeout   = defaultTraceTimeout
 		txContext = core.NewEVMTxContext(message)
 	)
-
-	if config == nil {
-		config = &TraceConfig{}
-	}
-	// Default tracer is the struct logger
-	tracer = logger.NewStructLogger(config.Config)
-	if config.Tracer != nil {
-		tracer, err = DefaultDirectory.New(*config.Tracer, txctx, config.TracerConfig)
-		if err != nil {
-			return nil, err
-		}
-		if *config.Tracer == "goCallTracer" {
-			tracer = NewCallTracer(statedb)
-		} else {
-			// Constuct the JavaScript tracer to execute with
-			if tracer, err = New(*config.Tracer, txctx); err != nil {
+	switch {
+	case config == nil:
+		tracer = logger.NewStructLogger(nil)
+	case config.Tracer != nil:
+		// Define a meaningful timeout of a single transaction trace
+		timeout := defaultTraceTimeout
+		if config.Timeout != nil {
+			if timeout, err = time.ParseDuration(*config.Timeout); err != nil {
 				return nil, err
 			}
-			// Handle timeouts and RPC cancellations
+		}
+		if t, err := DefaultDirectory.New(*config.Tracer, txctx, nil); err != nil {
+			return nil, err
+		} else {
 			deadlineCtx, cancel := context.WithTimeout(ctx, timeout)
 			go func() {
 				<-deadlineCtx.Done()
 				if errors.Is(deadlineCtx.Err(), context.DeadlineExceeded) {
-					tracer.(Tracer).Stop(errors.New("execution timeout"))
+					t.Stop(errors.New("execution timeout"))
 				}
 			}()
 			defer cancel()
+			tracer = t
+		}
+	default:
+		tracer = logger.NewStructLogger(config.Config)
 	}
 
 	vmenv := vm.NewEVM(vmctx, txContext, statedb, api.backend.ChainConfig(), vm.Config{Tracer: tracer, NoBaseFee: true})
@@ -1376,6 +1375,8 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 	// Call Prepare to clear out the statedb access list
 	statedb.SetTxContext(txctx.TxHash, txctx.TxIndex)
 
+	var result *core.ExecutionResult
+
 	if config.BorTx == nil {
 		config.BorTx = newBoolPtr(false)
 	}
@@ -1383,12 +1384,14 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 	if *config.BorTx {
 		callmsg := prepareCallMessage(*message)
 		// nolint : contextcheck
-		if _, err := statefull.ApplyBorMessage(*vmenv, callmsg); err != nil {
+		result, err = statefull.ApplyBorMessage(*vmenv, callmsg)
+		if err != nil {
 			return nil, fmt.Errorf("tracing failed: %w", err)
 		}
 	} else {
 		// nolint : contextcheck
-		if _, err = core.ApplyMessage(vmenv, message, new(core.GasPool).AddGas(message.GasLimit), context.Background()); err != nil {
+		result, err = core.ApplyMessage(vmenv, message, new(core.GasPool).AddGas(message.GasLimit), context.Background())
+		if err != nil {
 			return nil, fmt.Errorf("tracing failed: %w", err)
 		}
 	}
