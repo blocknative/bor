@@ -1,7 +1,7 @@
 package tracers
 
 import (
-	"fmt"
+	"encoding/json"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -37,13 +37,22 @@ type call struct {
 
 type TracerResult interface {
 	vm.EVMLogger
-	GetResult() (interface{}, error)
+	GetResult() (json.RawMessage, error)
+	Stop(error)
 }
 
 type CallTracer struct {
 	callStack []*call
 	descended bool
 	statedb   *state.StateDB
+}
+
+func (tracer *CallTracer) CaptureTxStart(gasLimit uint64) {
+
+}
+
+func (tracer *CallTracer) CaptureTxEnd(restGas uint64) {
+
 }
 
 func NewCallTracer(statedb *state.StateDB) TracerResult {
@@ -58,8 +67,11 @@ func (tracer *CallTracer) i() int {
 	return len(tracer.callStack) - 1
 }
 
-func (tracer *CallTracer) GetResult() (interface{}, error) {
-	return tracer.callStack[0], nil
+func (tracer *CallTracer) GetResult() (json.RawMessage, error) {
+	return json.Marshal(tracer.callStack[0])
+}
+
+func (tracer *CallTracer) Stop(_ error) {
 }
 
 func (tracer *CallTracer) CaptureStart(evm *vm.EVM, from common.Address, to common.Address, create bool, input []byte, gas uint64, value *big.Int) {
@@ -73,9 +85,8 @@ func (tracer *CallTracer) CaptureStart(evm *vm.EVM, from common.Address, to comm
 		Calls: []*call{},
 	}}
 }
-func (tracer *CallTracer) CaptureEnd(output []byte, gasUsed uint64, t time.Duration, err error) {
+func (tracer *CallTracer) CaptureEnd(output []byte, gasUsed uint64, err error) {
 	tracer.callStack[tracer.i()].GasUsed = hexutil.Uint64(gasUsed)
-	tracer.callStack[tracer.i()].Time = fmt.Sprintf("%v", t)
 	tracer.callStack[tracer.i()].Output = hexutil.Bytes(output)
 }
 
