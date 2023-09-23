@@ -44,7 +44,8 @@ jobs:
           path: assets-uploader
       - name: build assets-uploader
         run: cd assets-uploader/cmd/github-assets-uploader && go build && echo "ASSETS_UPLOADER_DIR=$(pwd)" > $GITHUB_ENV
-      - name: Build bor
+      - name: Prepare
+        id: prepare
         run: |
           make bor
           cd ./build/bin/

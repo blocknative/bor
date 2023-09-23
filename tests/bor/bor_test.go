@@ -26,6 +26,7 @@ import (
 	"github.com/ethereum/go-ethereum/consensus/bor"
 	"github.com/ethereum/go-ethereum/consensus/bor/clerk"
 	"github.com/ethereum/go-ethereum/consensus/bor/heimdall/checkpoint"
+	"github.com/ethereum/go-ethereum/consensus/bor/heimdall/milestone"
 	"github.com/ethereum/go-ethereum/consensus/bor/valset"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core"
@@ -370,24 +371,35 @@ func TestInsertingSpanSizeBlocks(t *testing.T) {
 	engine := init.ethereum.Engine()
 	_bor := engine.(*bor.Bor)
 
-	defer _bor.Close()
-
 	_, currentSpan := loadSpanFromFile(t)
 
 	h, ctrl := getMockedHeimdallClient(t, currentSpan)
-	defer ctrl.Finish()
+	defer func() {
+		_bor.Close()
+		ctrl.Finish()
+	}()
 
 	h.EXPECT().Close().AnyTimes()
+
 	h.EXPECT().FetchCheckpoint(gomock.Any(), int64(-1)).Return(&checkpoint.Checkpoint{
 		Proposer:   currentSpan.SelectedProducers[0].Address,
 		StartBlock: big.NewInt(0),
 		EndBlock:   big.NewInt(int64(spanSize)),
 	}, nil).AnyTimes()
 
+	h.EXPECT().FetchMilestone(gomock.Any()).Return(&milestone.Milestone{
+		Proposer:   currentSpan.SelectedProducers[0].Address,
+		StartBlock: big.NewInt(0),
+		EndBlock:   big.NewInt(int64(spanSize)),
+	}, nil).AnyTimes()
+
+	h.EXPECT().FetchLastNoAckMilestone(gomock.Any()).Return("", nil).AnyTimes()
+
+	h.EXPECT().FetchNoAckMilestone(gomock.Any(), string("test")).Return(nil).AnyTimes()
+
 	_bor.SetHeimdallClient(h)
 
-	db := init.ethereum.ChainDb()
-	block := init.genesis.ToBlock(db)
+	block := init.genesis.ToBlock()
 	// to := int64(block.Header().Time)
 
 	currentValidators := []*valset.Validator{valset.NewValidator(addr, 10)}
@@ -425,8 +437,7 @@ func TestFetchStateSyncEvents(t *testing.T) {
 	defer _bor.Close()
 
 	// A. Insert blocks for 0th sprint
-	db := init.ethereum.ChainDb()
-	block := init.genesis.ToBlock(db)
+	block := init.genesis.ToBlock()
 
 	// B.1 Mock /bor/span/1
 	res, _ := loadSpanFromFile(t)
@@ -452,7 +463,16 @@ func TestFetchStateSyncEvents(t *testing.T) {
 
 	h := mocks.NewMockIHeimdallClient(ctrl)
 	h.EXPECT().Close().AnyTimes()
+
 	h.EXPECT().Span(gomock.Any(), uint64(1)).Return(&res.Result, nil).AnyTimes()
+
+	h.EXPECT().FetchCheckpoint(gomock.Any(), int64(-1)).Return(&checkpoint.Checkpoint{}, nil).AnyTimes()
+
+	h.EXPECT().FetchMilestone(gomock.Any()).Return(&milestone.Milestone{}, nil).AnyTimes()
+
+	h.EXPECT().FetchLastNoAckMilestone(gomock.Any()).Return("", nil).AnyTimes()
+
+	h.EXPECT().FetchNoAckMilestone(gomock.Any(), string("test")).Return(nil).AnyTimes()
 
 	// B.2 Mock State Sync events
 	fromID := uint64(1)
@@ -502,7 +522,16 @@ func TestFetchStateSyncEvents_2(t *testing.T) {
 
 	h := mocks.NewMockIHeimdallClient(ctrl)
 	h.EXPECT().Close().AnyTimes()
+
 	h.EXPECT().Span(gomock.Any(), uint64(1)).Return(&res.Result, nil).AnyTimes()
+
+	h.EXPECT().FetchCheckpoint(gomock.Any(), int64(-1)).Return(&checkpoint.Checkpoint{}, nil).AnyTimes()
+
+	h.EXPECT().FetchMilestone(gomock.Any()).Return(&milestone.Milestone{}, nil).AnyTimes()
+
+	h.EXPECT().FetchLastNoAckMilestone(gomock.Any()).Return("", nil).AnyTimes()
+
+	h.EXPECT().FetchNoAckMilestone(gomock.Any(), string("test")).Return(nil).AnyTimes()
 
 	// Mock State Sync events
 	// at # sprintSize, events are fetched for [fromID, (block-sprint).Time)
@@ -525,8 +554,7 @@ func TestFetchStateSyncEvents_2(t *testing.T) {
 	_bor.SetHeimdallClient(h)
 
 	// Insert blocks for 0th sprint
-	db := init.ethereum.ChainDb()
-	block := init.genesis.ToBlock(db)
+	block := init.genesis.ToBlock()
 
 	var currentValidators []*valset.Validator
 
@@ -595,12 +623,20 @@ func TestOutOfTurnSigning(t *testing.T) {
 
 	h.EXPECT().Close().AnyTimes()
 
+	h.EXPECT().FetchCheckpoint(gomock.Any(), int64(-1)).Return(&checkpoint.Checkpoint{}, nil).AnyTimes()
+
+	h.EXPECT().FetchMilestone(gomock.Any()).Return(&milestone.Milestone{}, nil).AnyTimes()
+
+	h.EXPECT().FetchLastNoAckMilestone(gomock.Any()).Return("", nil).AnyTimes()
+
+	h.EXPECT().FetchNoAckMilestone(gomock.Any(), string("test")).Return(nil).AnyTimes()
+
 	spanner := getMockedSpanner(t, heimdallSpan.ValidatorSet.Validators)
 	_bor.SetSpanner(spanner)
+
 	_bor.SetHeimdallClient(h)
 
-	db := init.ethereum.ChainDb()
-	block := init.genesis.ToBlock(db)
+	block := init.genesis.ToBlock()
 
 	setDifficulty := func(header *types.Header) {
 		if IsSprintStart(header.Number.Uint64()) {
@@ -677,11 +713,17 @@ func TestSignerNotFound(t *testing.T) {
 	defer ctrl.Finish()
 
 	h.EXPECT().Close().AnyTimes()
+	h.EXPECT().FetchCheckpoint(gomock.Any(), int64(-1)).Return(&checkpoint.Checkpoint{}, nil).AnyTimes()
+
+	h.EXPECT().FetchMilestone(gomock.Any()).Return(&milestone.Milestone{}, nil).AnyTimes()
+
+	h.EXPECT().FetchLastNoAckMilestone(gomock.Any()).Return("", nil).AnyTimes()
+
+	h.EXPECT().FetchNoAckMilestone(gomock.Any(), string("test")).Return(nil).AnyTimes()
 
 	_bor.SetHeimdallClient(h)
 
-	db := init.ethereum.ChainDb()
-	block := init.genesis.ToBlock(db)
+	block := init.genesis.ToBlock()
 
 	// random signer account that is not a part of the validator set
 	const signer = "3714d99058cd64541433d59c6b391555b2fd9b54629c2b717a6c9c00d1127b6b"
@@ -780,7 +822,7 @@ func TestEIP1559Transition(t *testing.T) {
 	diskdb := rawdb.NewMemoryDatabase()
 	gspec.MustCommit(diskdb)
 
-	chain, err := core.NewBlockChain(diskdb, nil, gspec.Config, engine, vm.Config{}, nil, nil, nil)
+	chain, err := core.NewBlockChain(diskdb, nil, gspec, nil, engine, vm.Config{}, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("failed to create tester chain: %v", err)
 	}
@@ -1073,7 +1115,7 @@ func TestTransitionWithoutEIP155(t *testing.T) {
 	diskdb := rawdb.NewMemoryDatabase()
 	gspec.MustCommit(diskdb)
 
-	chain, err := core.NewBlockChain(diskdb, nil, gspec.Config, engine, vm.Config{}, nil, nil, nil)
+	chain, err := core.NewBlockChain(diskdb, nil, gspec, nil, engine, vm.Config{}, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("failed to create tester chain: %v", err)
 	}
@@ -1094,8 +1136,7 @@ func TestJaipurFork(t *testing.T) {
 	_bor := engine.(*bor.Bor)
 	defer _bor.Close()
 
-	db := init.ethereum.ChainDb()
-	block := init.genesis.ToBlock(db)
+	block := init.genesis.ToBlock()
 
 	res, _ := loadSpanFromFile(t)
 
