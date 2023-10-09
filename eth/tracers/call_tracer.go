@@ -3,13 +3,12 @@ package tracers
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/vm"
-
-	"time"
 
 	"github.com/ethereum/go-ethereum/log"
 
@@ -73,9 +72,9 @@ func (tracer *CallTracer) CaptureStart(evm *vm.EVM, from common.Address, to comm
 		Calls: []*call{},
 	}}
 }
-func (tracer *CallTracer) CaptureEnd(output []byte, gasUsed uint64, t time.Duration, err error) {
+func (tracer *CallTracer) CaptureEnd(output []byte, gasUsed uint64, err error) {
 	tracer.callStack[tracer.i()].GasUsed = hexutil.Uint64(gasUsed)
-	tracer.callStack[tracer.i()].Time = fmt.Sprintf("%v", t)
+	tracer.callStack[tracer.i()].Time = fmt.Sprintf("%v", time.Since(tracer.callStack[tracer.i()].startTime))
 	tracer.callStack[tracer.i()].Output = hexutil.Bytes(output)
 }
 
@@ -200,3 +199,7 @@ func (tracer *CallTracer) CaptureFault(pc uint64, op vm.OpCode, gas, cost uint64
 func (tracer *CallTracer) CaptureEnter(typ vm.OpCode, from common.Address, to common.Address, input []byte, gas uint64, value *big.Int) {
 }
 func (tracer *CallTracer) CaptureExit(output []byte, gasUsed uint64, err error) {}
+
+func (tracer *CallTracer) CaptureTxStart(_ uint64) {}
+
+func (tracer *CallTracer) CaptureTxEnd(_ uint64) {}
