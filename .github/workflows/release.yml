@@ -40,11 +40,18 @@ jobs:
           go-version: '^1.20.5' # The Go version to download (if necessary) and use.
       - uses: actions/checkout@v3
         with:
+<<<<<<< HEAD
           repository: wangyoucao577/assets-uploader
           path: assets-uploader
       - name: build assets-uploader
         run: cd assets-uploader/cmd/github-assets-uploader && go build && echo "ASSETS_UPLOADER_DIR=$(pwd)" > $GITHUB_ENV
       - name: Build bor
+=======
+          go-version: 1.20.x
+
+      - name: Prepare
+        id: prepare
+>>>>>>> upstream/1.1.0-beta3
         run: |
           make bor
           cd ./build/bin/
