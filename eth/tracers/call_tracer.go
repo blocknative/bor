@@ -1,15 +1,15 @@
 package tracers
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/vm"
-
-	"time"
 
 	"github.com/ethereum/go-ethereum/log"
 
@@ -37,20 +37,23 @@ type call struct {
 
 type TracerResult interface {
 	vm.EVMLogger
-	GetResult() (interface{}, error)
+	GetResult() (json.RawMessage, error)
 }
 
 type CallTracer struct {
 	callStack []*call
 	descended bool
 	statedb   *state.StateDB
+
+	startTime time.Time
 }
 
-func NewCallTracer(statedb *state.StateDB) TracerResult {
+func NewCallTracer(statedb *state.StateDB) Tracer {
 	return &CallTracer{
 		callStack: []*call{},
 		descended: false,
 		statedb:   statedb,
+		startTime: time.Now(),
 	}
 }
 
@@ -58,8 +61,8 @@ func (tracer *CallTracer) i() int {
 	return len(tracer.callStack) - 1
 }
 
-func (tracer *CallTracer) GetResult() (interface{}, error) {
-	return tracer.callStack[0], nil
+func (tracer *CallTracer) GetResult() (json.RawMessage, error) {
+	return json.Marshal(tracer.callStack[0])
 }
 
 func (tracer *CallTracer) CaptureStart(evm *vm.EVM, from common.Address, to common.Address, create bool, input []byte, gas uint64, value *big.Int) {
@@ -73,9 +76,9 @@ func (tracer *CallTracer) CaptureStart(evm *vm.EVM, from common.Address, to comm
 		Calls: []*call{},
 	}}
 }
-func (tracer *CallTracer) CaptureEnd(output []byte, gasUsed uint64, t time.Duration, err error) {
+func (tracer *CallTracer) CaptureEnd(output []byte, gasUsed uint64, err error) {
 	tracer.callStack[tracer.i()].GasUsed = hexutil.Uint64(gasUsed)
-	tracer.callStack[tracer.i()].Time = fmt.Sprintf("%v", t)
+	tracer.callStack[tracer.i()].Time = fmt.Sprintf("%v", time.Since(tracer.startTime))
 	tracer.callStack[tracer.i()].Output = hexutil.Bytes(output)
 }
 
@@ -200,3 +203,9 @@ func (tracer *CallTracer) CaptureFault(pc uint64, op vm.OpCode, gas, cost uint64
 func (tracer *CallTracer) CaptureEnter(typ vm.OpCode, from common.Address, to common.Address, input []byte, gas uint64, value *big.Int) {
 }
 func (tracer *CallTracer) CaptureExit(output []byte, gasUsed uint64, err error) {}
+
+func (tracer *CallTracer) Stop(_ error) {}
+
+func (tracer *CallTracer) CaptureTxStart(_ uint64) {}
+
+func (tracer *CallTracer) CaptureTxEnd(_ uint64) {}
