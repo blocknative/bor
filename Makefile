@@ -233,8 +233,4 @@ release:
 		-v `pwd`:/go/src/$(PACKAGE_NAME) \
 		-w /go/src/$(PACKAGE_NAME) \
 		goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-<<<<<<< HEAD
-		--rm-dist --skip-validate
-=======
 		--clean --skip-validate
->>>>>>> upstream/1.1.0-beta3
