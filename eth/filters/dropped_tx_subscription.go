@@ -1,14 +1,9 @@
 package filters
 
 import (
-	"context"
-	"time"
-
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/rpc"
 )
 
 type dropNotification struct {
@@ -68,42 +63,4 @@ func newRPCPendingTransaction(tx *types.Transaction) *ethapi.RPCTransaction {
 		result.GasPrice = nil
 	}
 	return result
-}
-
-// DroppedTransactions send a notification each time a transaction is dropped from the mempool
-func (api *PublicFilterAPI) DroppedTransactions(ctx context.Context) (*rpc.Subscription, error) {
-	notifier, supported := rpc.NotifierFromContext(ctx)
-	if !supported {
-		return &rpc.Subscription{}, rpc.ErrNotificationsUnsupported
-	}
-
-	rpcSub := notifier.CreateSubscription()
-
-	go func() {
-		dropped := make(chan core.DropTxsEvent)
-		droppedSub := api.backend.SubscribeDropTxsEvent(dropped)
-
-		for {
-			select {
-			case d := <-dropped:
-				for _, tx := range d.Txs {
-					notification := &dropNotification{
-						Tx:          newRPCPendingTransaction(tx),
-						Reason:      d.Reason,
-						Replacement: newRPCPendingTransaction(d.Replacement),
-						Time:        time.Now().UnixNano(),
-					}
-					notifier.Notify(rpcSub.ID, notification)
-				}
-			case <-rpcSub.Err():
-				droppedSub.Unsubscribe()
-				return
-			case <-notifier.Closed():
-				droppedSub.Unsubscribe()
-				return
-			}
-		}
-	}()
-
-	return rpcSub, nil
 }

@@ -232,26 +232,6 @@ func validateEvents(events chan core.NewTxsEvent, count int) error {
 	return nil
 }
 
-// validateDroppedEvents checks that the correct number of transaction rejection
-// and drop events were fired.
-func validateDroppedEvents(dropped chan DropTxsEvent, dcount int) error {
-	count := 0
-dloop:
-	for {
-		select {
-		case <-dropped:
-			count++
-		case <-time.After(50 * time.Millisecond):
-			break dloop
-		}
-	}
-	if count > dcount {
-		return fmt.Errorf("more than %v drop events fired: %v", dcount, count)
-	}
-
-	return nil
-}
-
 func deriveSender(tx *types.Transaction) (common.Address, error) {
 	return types.Sender(types.HomesteadSigner{}, tx)
 }
@@ -951,9 +931,6 @@ func TestGapFilling(t *testing.T) {
 
 	sub := pool.txFeed.Subscribe(events)
 	defer sub.Unsubscribe()
-	devents := make(chan DropTxsEvent, testTxPoolConfig.AccountQueue+5)
-	dsub := pool.dropTxFeed.Subscribe(devents)
-	defer dsub.Unsubscribe()
 
 	// Create a pending and a queued transaction with a nonce-gap in between
 	pool.AddRemotesSync([]*types.Transaction{
@@ -973,15 +950,8 @@ func TestGapFilling(t *testing.T) {
 	if err := validateEvents(events, 1); err != nil {
 		t.Fatalf("original event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 6); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 	// Fill the nonce gap and ensure all transactions become pending
@@ -1677,15 +1647,8 @@ func TestRepricing(t *testing.T) {
 	if err := validateEvents(events, 7); err != nil {
 		t.Fatalf("original event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	devents := make(chan DropTxsEvent, testTxPoolConfig.AccountQueue+5)
-	dsub := pool.dropTxFeed.Subscribe(devents)
-	defer dsub.Unsubscribe()
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 
@@ -1704,15 +1667,8 @@ func TestRepricing(t *testing.T) {
 	if err := validateEvents(events, 0); err != nil {
 		t.Fatalf("reprice event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 3); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 
@@ -1732,15 +1688,8 @@ func TestRepricing(t *testing.T) {
 	if err := validateEvents(events, 0); err != nil {
 		t.Fatalf("post-reprice event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 0); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 
@@ -1758,15 +1707,8 @@ func TestRepricing(t *testing.T) {
 	if err := validateEvents(events, 1); err != nil {
 		t.Fatalf("post-reprice local event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 2); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 
@@ -1786,15 +1728,8 @@ func TestRepricing(t *testing.T) {
 	if err := validateEvents(events, 5); err != nil {
 		t.Fatalf("post-reprice event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 9); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 }
@@ -2051,9 +1986,6 @@ func TestUnderpricing(t *testing.T) {
 
 	sub := pool.txFeed.Subscribe(events)
 	defer sub.Unsubscribe()
-	devents := make(chan DropTxsEvent, testTxPoolConfig.AccountQueue+5)
-	dsub := pool.dropTxFeed.Subscribe(devents)
-	defer dsub.Unsubscribe()
 
 	// Create a number of test accounts and fund them
 	keys := make([]*ecdsa.PrivateKey, 5)
@@ -2088,15 +2020,8 @@ func TestUnderpricing(t *testing.T) {
 	if err := validateEvents(events, 3); err != nil {
 		t.Fatalf("original event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 8); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 
@@ -2137,15 +2062,8 @@ func TestUnderpricing(t *testing.T) {
 	if err := validateEvents(events, 2); err != nil {
 		t.Fatalf("additional event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 13); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 
@@ -2172,15 +2090,8 @@ func TestUnderpricing(t *testing.T) {
 	if err := validateEvents(events, 2); err != nil {
 		t.Fatalf("local event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 7); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 }
@@ -2207,9 +2118,6 @@ func TestStableUnderpricing(t *testing.T) {
 
 	sub := pool.txFeed.Subscribe(events)
 	defer sub.Unsubscribe()
-	devents := make(chan DropTxsEvent, testTxPoolConfig.AccountQueue+5)
-	dsub := pool.dropTxFeed.Subscribe(devents)
-	defer dsub.Unsubscribe()
 
 	// Create a number of test accounts and fund them
 	keys := make([]*ecdsa.PrivateKey, 2)
@@ -2236,15 +2144,8 @@ func TestStableUnderpricing(t *testing.T) {
 	if err := validateEvents(events, int(config.GlobalSlots)); err != nil {
 		t.Fatalf("original event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 3); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 	// Ensure that adding high priced transactions drops a cheap, but doesn't produce a gap
@@ -2264,15 +2165,8 @@ func TestStableUnderpricing(t *testing.T) {
 	if err := validateEvents(events, 1); err != nil {
 		t.Fatalf("additional event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 4); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 }
@@ -2561,9 +2455,6 @@ func TestReplacement(t *testing.T) {
 
 	sub := pool.txFeed.Subscribe(events)
 	defer sub.Unsubscribe()
-	devents := make(chan DropTxsEvent, testTxPoolConfig.AccountQueue+5)
-	dsub := pool.dropTxFeed.Subscribe(devents)
-	defer dsub.Unsubscribe()
 
 	// Create a test account to add transactions with
 	key, _ := crypto.GenerateKey()
@@ -2588,9 +2479,6 @@ func TestReplacement(t *testing.T) {
 	if err := validateEvents(events, 2); err != nil {
 		t.Fatalf("cheap replacement event firing failed: %v", err)
 	}
-	if err := validateDroppedEvents(devents, 4); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
 
 	if err := pool.addRemoteSync(pricedTransaction(0, 100000, big.NewInt(price), key)); err != nil {
 		t.Fatalf("failed to add original proper pending transaction: %v", err)
@@ -2606,9 +2494,6 @@ func TestReplacement(t *testing.T) {
 
 	if err := validateEvents(events, 2); err != nil {
 		t.Fatalf("proper replacement event firing failed: %v", err)
-	}
-	if err := validateDroppedEvents(devents, 2); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
 	}
 
 	// Add queued transactions, ensuring the minimum price bump is enforced for replacement (for ultra low prices too)
@@ -2639,15 +2524,8 @@ func TestReplacement(t *testing.T) {
 	if err := validateEvents(events, 0); err != nil {
 		t.Fatalf("queued replacement event firing failed: %v", err)
 	}
-<<<<<<< HEAD:core/tx_pool_test.go
-	if err := validateDroppedEvents(devents, 6); err != nil {
-		t.Errorf("gap-filling drop / reject event firing failed: %v", err)
-	}
-	if err := validateTxPoolInternals(pool); err != nil {
-=======
 
 	if err := validatePoolInternals(pool); err != nil {
->>>>>>> upstream/1.1.0-beta3:core/txpool/txpool_test.go
 		t.Fatalf("pool internal state corrupted: %v", err)
 	}
 }
@@ -3767,7 +3645,7 @@ func testPoolBatchInsert(t *testing.T, cfg txPoolRapidConfig) {
 				testTxPoolConfig.AccountSlots = 16
 				testTxPoolConfig.GlobalQueue = 32768
 				testTxPoolConfig.GlobalSlots = 32768
-				testTxPoolConfig.Lifetime = time.Hour + 30*time.Minute //"1h30m0s"
+				testTxPoolConfig.Lifetime = time.Hour + 30*time.Minute // "1h30m0s"
 				testTxPoolConfig.PriceLimit = 1
 
 				now := time.Now()
@@ -3899,7 +3777,7 @@ func testPoolBatchInsert(t *testing.T, cfg txPoolRapidConfig) {
 
 					// check if txPool got stuck
 					if currentTxPoolStats == lastTxPoolStats {
-						stuckBlocks++ //todo: need something better then that
+						stuckBlocks++ // todo: need something better then that
 					} else {
 						stuckBlocks = 0
 						lastTxPoolStats = currentTxPoolStats
@@ -4978,7 +4856,7 @@ func runWithTimeout(tb testing.TB, fn func(chan struct{}), outerDone chan struct
 		tb.Logf("[%s] exiting inner runWithTimeout by outer exit event for %q, thread %d, iteration %d", common.NowMilliseconds(), name, thread, n)
 	case <-doneCh:
 		// only for debug
-		//tb.Logf("[%s] exiting inner runWithTimeout by successful call for %q, thread %d, iteration %d", common.NowMilliseconds(), name, thread, n)
+		// tb.Logf("[%s] exiting inner runWithTimeout by successful call for %q, thread %d, iteration %d", common.NowMilliseconds(), name, thread, n)
 	case <-timeout.C:
 		atomic.StoreInt32(isError, 1)
 

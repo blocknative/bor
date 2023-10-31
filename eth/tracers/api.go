@@ -707,7 +707,7 @@ func (api *API) IntermediateRoots(ctx context.Context, hash common.Hash, config 
 		)
 
 		statedb.SetTxContext(tx.Hash(), i)
-		//nolint: nestif
+		// nolint: nestif
 		if stateSyncPresent && i == len(txs)-1 {
 			if *config.BorTraceEnabled {
 				callmsg := prepareCallMessage(*msg)
@@ -910,7 +910,7 @@ txloop:
 
 		// nolint: nestif
 		if !ioflag {
-			//nolint: nestif
+			// nolint: nestif
 			if stateSyncPresent && i == len(txs)-1 {
 				if *config.BorTraceEnabled {
 					callmsg := prepareCallMessage(*msg)
@@ -1118,7 +1118,7 @@ func (api *API) standardTraceBlockToFile(ctx context.Context, block *types.Block
 		// Execute the transaction and flush any traces to disk
 		vmenv := vm.NewEVM(vmctx, txContext, statedb, chainConfig, vmConf)
 		statedb.SetTxContext(tx.Hash(), i)
-		//nolint: nestif
+		// nolint: nestif
 		if stateSyncPresent && i == len(txs)-1 {
 			if *config.BorTraceEnabled {
 				callmsg := prepareCallMessage(*msg)
@@ -1321,7 +1321,7 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 		timeout   = defaultTraceTimeout
 		txContext = core.NewEVMTxContext(message)
 	)
-<<<<<<< HEAD
+
 	switch {
 	case config == nil:
 		tracer = logger.NewStructLogger(nil)
@@ -1337,7 +1337,7 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 			tracer = NewCallTracer(statedb)
 		} else {
 			// Constuct the JavaScript tracer to execute with
-			if tracer, err = New(*config.Tracer, txctx); err != nil {
+			if tracer, err = New(*config.Tracer, txctx, nil); err != nil {
 				return nil, err
 			}
 			// Handle timeouts and RPC cancellations
@@ -1352,11 +1352,10 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 		}
 	default:
 		tracer = logger.NewStructLogger(config.Config)
-=======
+	}
 
 	if config == nil {
 		config = &TraceConfig{}
->>>>>>> upstream/1.1.0-beta3
 	}
 	// Default tracer is the struct logger
 	tracer = logger.NewStructLogger(config.Config)
@@ -1393,6 +1392,8 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 	// Call Prepare to clear out the statedb access list
 	statedb.SetTxContext(txctx.TxHash, txctx.TxIndex)
 
+	var result *core.ExecutionResult
+
 	if config.BorTx == nil {
 		config.BorTx = newBoolPtr(false)
 	}
@@ -1410,7 +1411,6 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 		}
 	}
 
-<<<<<<< HEAD
 	// Depending on the tracer type, format and return the output.
 	switch tracer := tracer.(type) {
 	case *logger.StructLogger:
@@ -1426,18 +1426,14 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 			StructLogs:  ethapi.FormatLogs(tracer.StructLogs()),
 		}, nil
 
-	case TracerResult:
-		return tracer.GetResult()
-
 	case Tracer:
 		return tracer.GetResult()
 
 	default:
 		panic(fmt.Sprintf("bad tracer type %T", tracer))
 	}
-=======
+
 	return tracer.GetResult()
->>>>>>> upstream/1.1.0-beta3
 }
 
 // APIs return the collection of RPC services the tracer package offers.

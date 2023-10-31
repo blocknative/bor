@@ -26,6 +26,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 )
 
+func New(name string, ctx *Context, cfg json.RawMessage) (Tracer, error) {
+	return DefaultDirectory.New(name, ctx, cfg)
+}
+
 // Context contains some contextual infos for a transaction execution that is not
 // available from within the EVM object.
 type Context struct {

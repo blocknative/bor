@@ -28,25 +28,18 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/gorilla/websocket"
+
+	"github.com/ethereum/go-ethereum/log"
 )
 
 const (
-<<<<<<< HEAD
 	wsReadBuffer       = 2048 // 1024 bytes is not enough
 	wsWriteBuffer      = 2048 // 1024 bytes is not enough
 	wsPingInterval     = 58 * time.Second
 	wsPingWriteTimeout = 5 * time.Second
 	wsMessageSizeLimit = 15 * 1024 * 1024
-=======
-	wsReadBuffer       = 1024
-	wsWriteBuffer      = 1024
-	wsPingInterval     = 30 * time.Second
-	wsPingWriteTimeout = 5 * time.Second
 	wsPongTimeout      = 30 * time.Second
-	wsMessageSizeLimit = 32 * 1024 * 1024
->>>>>>> upstream/1.1.0-beta3
 )
 
 var wsBufferPool = new(sync.Pool)
@@ -327,8 +320,6 @@ type websocketCodec struct {
 
 func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) ServerCodec {
 	conn.SetReadLimit(wsMessageSizeLimit)
-<<<<<<< HEAD
-=======
 	conn.SetPongHandler(func(appData string) error {
 		conn.SetReadDeadline(time.Time{})
 		return nil
@@ -337,7 +328,6 @@ func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) Serve
 	encode := func(v interface{}, isErrorResponse bool) error {
 		return conn.WriteJSON(v)
 	}
->>>>>>> upstream/1.1.0-beta3
 	wc := &websocketCodec{
 		jsonCodec: NewFuncCodec(conn, encode, conn.ReadJSON).(*jsonCodec),
 		conn:      conn,

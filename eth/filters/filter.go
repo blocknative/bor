@@ -27,32 +27,6 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-<<<<<<< HEAD
-//go:generate mockgen -destination=../../eth/filters/IBackend.go -package=filters . Backend
-type Backend interface {
-	ChainDb() ethdb.Database
-	HeaderByNumber(ctx context.Context, blockNr rpc.BlockNumber) (*types.Header, error)
-	HeaderByHash(ctx context.Context, blockHash common.Hash) (*types.Header, error)
-	GetReceipts(ctx context.Context, blockHash common.Hash) (types.Receipts, error)
-	GetLogs(ctx context.Context, blockHash common.Hash) ([][]*types.Log, error)
-	GetBorBlockReceipt(ctx context.Context, blockHash common.Hash) (*types.Receipt, error)
-	GetBorBlockLogs(ctx context.Context, blockHash common.Hash) ([]*types.Log, error)
-
-	SubscribeNewTxsEvent(chan<- core.NewTxsEvent) event.Subscription
-	SubscribeDropTxsEvent(ch chan<- core.DropTxsEvent) event.Subscription
-	SubscribeChainEvent(ch chan<- core.ChainEvent) event.Subscription
-	SubscribeRemovedLogsEvent(ch chan<- core.RemovedLogsEvent) event.Subscription
-	SubscribeLogsEvent(ch chan<- []*types.Log) event.Subscription
-	SubscribePendingLogsEvent(ch chan<- []*types.Log) event.Subscription
-
-	BloomStatus() (uint64, uint64)
-	ServiceFilter(ctx context.Context, session *bloombits.MatcherSession)
-
-	SubscribeStateSyncEvent(ch chan<- core.StateSyncEvent) event.Subscription
-}
-
-=======
->>>>>>> upstream/1.1.0-beta3
 // Filter can be used to retrieve and filter logs.
 type Filter struct {
 	sys *FilterSystem
