@@ -3645,7 +3645,7 @@ func testPoolBatchInsert(t *testing.T, cfg txPoolRapidConfig) {
 				testTxPoolConfig.AccountSlots = 16
 				testTxPoolConfig.GlobalQueue = 32768
 				testTxPoolConfig.GlobalSlots = 32768
-				testTxPoolConfig.Lifetime = time.Hour + 30*time.Minute //"1h30m0s"
+				testTxPoolConfig.Lifetime = time.Hour + 30*time.Minute // "1h30m0s"
 				testTxPoolConfig.PriceLimit = 1
 
 				now := time.Now()
@@ -3777,7 +3777,7 @@ func testPoolBatchInsert(t *testing.T, cfg txPoolRapidConfig) {
 
 					// check if txPool got stuck
 					if currentTxPoolStats == lastTxPoolStats {
-						stuckBlocks++ //todo: need something better then that
+						stuckBlocks++ // todo: need something better then that
 					} else {
 						stuckBlocks = 0
 						lastTxPoolStats = currentTxPoolStats
@@ -4856,7 +4856,7 @@ func runWithTimeout(tb testing.TB, fn func(chan struct{}), outerDone chan struct
 		tb.Logf("[%s] exiting inner runWithTimeout by outer exit event for %q, thread %d, iteration %d", common.NowMilliseconds(), name, thread, n)
 	case <-doneCh:
 		// only for debug
-		//tb.Logf("[%s] exiting inner runWithTimeout by successful call for %q, thread %d, iteration %d", common.NowMilliseconds(), name, thread, n)
+		// tb.Logf("[%s] exiting inner runWithTimeout by successful call for %q, thread %d, iteration %d", common.NowMilliseconds(), name, thread, n)
 	case <-timeout.C:
 		atomic.StoreInt32(isError, 1)
 

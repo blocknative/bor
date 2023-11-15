@@ -24,6 +24,13 @@ import (
 // NewTxsEvent is posted when a batch of transactions enter the transaction pool.
 type NewTxsEvent struct{ Txs []*types.Transaction }
 
+// DropTxsEvent is posted when a batch of transactions are removed from the transaction pool
+type DropTxsEvent struct {
+	Txs         []*types.Transaction
+	Reason      string
+	Replacement *types.Transaction
+}
+
 // NewMinedBlockEvent is posted when a block has been imported.
 type NewMinedBlockEvent struct{ Block *types.Block }
 
@@ -41,3 +48,16 @@ type ChainSideEvent struct {
 }
 
 type ChainHeadEvent struct{ Block *types.Block }
+
+const (
+	DropUnderpriced = "underpriced-txs"
+	DropLowNonce    = "low-nonce-txs"
+	DropUnpayable   = "unpayable-txs"
+
+	DropAccountCap      = "account-cap-txs" // Accounts exceeding txpool.accountslots transactions
+	DropReplaced        = "replaced-txs"
+	DropUnexecutable    = "unexecutable-txs"
+	DropTruncating      = "truncating-txs"
+	DropOld             = "old-txs"
+	DropGasPriceUpdated = "updated-gas-price"
+)

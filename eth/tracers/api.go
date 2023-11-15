@@ -707,7 +707,7 @@ func (api *API) IntermediateRoots(ctx context.Context, hash common.Hash, config 
 		)
 
 		statedb.SetTxContext(tx.Hash(), i)
-		//nolint: nestif
+		// nolint: nestif
 		if stateSyncPresent && i == len(txs)-1 {
 			if *config.BorTraceEnabled {
 				callmsg := prepareCallMessage(*msg)
@@ -910,7 +910,7 @@ txloop:
 
 		// nolint: nestif
 		if !ioflag {
-			//nolint: nestif
+			// nolint: nestif
 			if stateSyncPresent && i == len(txs)-1 {
 				if *config.BorTraceEnabled {
 					callmsg := prepareCallMessage(*msg)
@@ -1118,7 +1118,7 @@ func (api *API) standardTraceBlockToFile(ctx context.Context, block *types.Block
 		// Execute the transaction and flush any traces to disk
 		vmenv := vm.NewEVM(vmctx, txContext, statedb, chainConfig, vmConf)
 		statedb.SetTxContext(tx.Hash(), i)
-		//nolint: nestif
+		// nolint: nestif
 		if stateSyncPresent && i == len(txs)-1 {
 			if *config.BorTraceEnabled {
 				callmsg := prepareCallMessage(*msg)
@@ -1322,6 +1322,38 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 		txContext = core.NewEVMTxContext(message)
 	)
 
+	switch {
+	case config == nil:
+		tracer = logger.NewStructLogger(nil)
+	case config.Tracer != nil:
+		// Define a meaningful timeout of a single transaction trace
+		timeout := defaultTraceTimeout
+		if config.Timeout != nil {
+			if timeout, err = time.ParseDuration(*config.Timeout); err != nil {
+				return nil, err
+			}
+		}
+		if *config.Tracer == "goCallTracer" {
+			tracer = NewCallTracer(statedb)
+		} else {
+			// Constuct the JavaScript tracer to execute with
+			if tracer, err = New(*config.Tracer, txctx, nil); err != nil {
+				return nil, err
+			}
+			// Handle timeouts and RPC cancellations
+			deadlineCtx, cancel := context.WithTimeout(ctx, timeout)
+			go func() {
+				<-deadlineCtx.Done()
+				if errors.Is(deadlineCtx.Err(), context.DeadlineExceeded) {
+					tracer.(Tracer).Stop(errors.New("execution timeout"))
+				}
+			}()
+			defer cancel()
+		}
+	default:
+		tracer = logger.NewStructLogger(config.Config)
+	}
+
 	if config == nil {
 		config = &TraceConfig{}
 	}
@@ -1360,6 +1392,8 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 	// Call Prepare to clear out the statedb access list
 	statedb.SetTxContext(txctx.TxHash, txctx.TxIndex)
 
+	var result *core.ExecutionResult
+
 	if config.BorTx == nil {
 		config.BorTx = newBoolPtr(false)
 	}
@@ -1375,6 +1409,28 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 		if _, err = core.ApplyMessage(vmenv, message, new(core.GasPool).AddGas(message.GasLimit), context.Background()); err != nil {
 			return nil, fmt.Errorf("tracing failed: %w", err)
 		}
+	}
+
+	// Depending on the tracer type, format and return the output.
+	switch tracer := tracer.(type) {
+	case *logger.StructLogger:
+		// If the result contains a revert reason, return it.
+		returnVal := fmt.Sprintf("%x", result.Return())
+		if len(result.Revert()) > 0 {
+			returnVal = fmt.Sprintf("%x", result.Revert())
+		}
+		return &ethapi.ExecutionResult{
+			Gas:         result.UsedGas,
+			Failed:      result.Failed(),
+			ReturnValue: returnVal,
+			StructLogs:  ethapi.FormatLogs(tracer.StructLogs()),
+		}, nil
+
+	case Tracer:
+		return tracer.GetResult()
+
+	default:
+		panic(fmt.Sprintf("bad tracer type %T", tracer))
 	}
 
 	return tracer.GetResult()

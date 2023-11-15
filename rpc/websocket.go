@@ -28,17 +28,18 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/gorilla/websocket"
+
+	"github.com/ethereum/go-ethereum/log"
 )
 
 const (
-	wsReadBuffer       = 1024
-	wsWriteBuffer      = 1024
-	wsPingInterval     = 30 * time.Second
+	wsReadBuffer       = 2048 // 1024 bytes is not enough
+	wsWriteBuffer      = 2048 // 1024 bytes is not enough
+	wsPingInterval     = 58 * time.Second
 	wsPingWriteTimeout = 5 * time.Second
+	wsMessageSizeLimit = 15 * 1024 * 1024
 	wsPongTimeout      = 30 * time.Second
-	wsMessageSizeLimit = 32 * 1024 * 1024
 )
 
 var wsBufferPool = new(sync.Pool)
@@ -390,7 +391,6 @@ func (wc *websocketCodec) pingLoop() {
 			wc.jsonCodec.encMu.Lock()
 			wc.conn.SetWriteDeadline(time.Now().Add(wsPingWriteTimeout))
 			wc.conn.WriteMessage(websocket.PingMessage, nil)
-			wc.conn.SetReadDeadline(time.Now().Add(wsPongTimeout))
 			wc.jsonCodec.encMu.Unlock()
 			timer.Reset(wsPingInterval)
 		}

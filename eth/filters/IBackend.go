@@ -329,3 +329,18 @@ func (mr *MockBackendMockRecorder) SubscribeStateSyncEvent(arg0 interface{}) *go
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeStateSyncEvent", reflect.TypeOf((*MockBackend)(nil).SubscribeStateSyncEvent), arg0)
 }
+
+
+// SubscribeDropTxsEvent mocks base method.
+func (m *MockBackend) SubscribeDropTxsEvent(arg0 chan<- core.DropTxsEvent) event.Subscription {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubscribeDropTxsEvent", arg0)
+	ret0, _ := ret[0].(event.Subscription)
+	return ret0
+}
+
+// SubscribeDropTxsEvent indicates an expected call of SubscribeDropTxsEvent.
+func (mr *MockBackendMockRecorder) SubscribeDropTxsEvent(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeDropTxsEvent", reflect.TypeOf((*MockBackend)(nil).SubscribeDropTxsEvent), arg0)
+}

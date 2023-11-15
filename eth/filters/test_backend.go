@@ -20,6 +20,7 @@ type TestBackend struct {
 	DB              ethdb.Database
 	sections        uint64
 	txFeed          event.Feed
+	dropTxFeed      event.Feed
 	logsFeed        event.Feed
 	rmLogsFeed      event.Feed
 	pendingLogsFeed event.Feed
@@ -120,6 +121,10 @@ func (b *TestBackend) GetLogs(ctx context.Context, hash common.Hash, number uint
 
 func (b *TestBackend) SubscribeNewTxsEvent(ch chan<- core.NewTxsEvent) event.Subscription {
 	return b.txFeed.Subscribe(ch)
+}
+
+func (b *TestBackend) SubscribeDropTxsEvent(ch chan<- core.DropTxsEvent) event.Subscription {
+	return b.dropTxFeed.Subscribe(ch)
 }
 
 func (b *TestBackend) SubscribeRemovedLogsEvent(ch chan<- core.RemovedLogsEvent) event.Subscription {
