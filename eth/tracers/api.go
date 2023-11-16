@@ -1392,8 +1392,6 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 	// Call Prepare to clear out the statedb access list
 	statedb.SetTxContext(txctx.TxHash, txctx.TxIndex)
 
-	var result *core.ExecutionResult
-
 	if config.BorTx == nil {
 		config.BorTx = newBoolPtr(false)
 	}
@@ -1414,17 +1412,7 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 	// Depending on the tracer type, format and return the output.
 	switch tracer := tracer.(type) {
 	case *logger.StructLogger:
-		// If the result contains a revert reason, return it.
-		returnVal := fmt.Sprintf("%x", result.Return())
-		if len(result.Revert()) > 0 {
-			returnVal = fmt.Sprintf("%x", result.Revert())
-		}
-		return &ethapi.ExecutionResult{
-			Gas:         result.UsedGas,
-			Failed:      result.Failed(),
-			ReturnValue: returnVal,
-			StructLogs:  ethapi.FormatLogs(tracer.StructLogs()),
-		}, nil
+		return tracer.GetResult()
 
 	case Tracer:
 		return tracer.GetResult()

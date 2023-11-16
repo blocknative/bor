@@ -1,5 +1,5 @@
 Source: bor-profile
-Version: 1.1.0-beta3
+Version: 1.1.0
 Section: develop
 Priority: standard
 Maintainer: Polygon <release-team@polygon.technology>
@@ -10,4 +10,3 @@ Architecture: arm64
 Multi-Arch: foreign
 Depends:
 Description: This is the bor package from Polygon Technology.
-

@@ -361,6 +361,10 @@ func (b *backendMock) SubscribeRemovedLogsEvent(ch chan<- core.RemovedLogsEvent)
 	return nil
 }
 
+func (b *backendMock) SubscribeDropTxsEvent(ch chan<- core.DropTxsEvent) event.Subscription {
+	return nil
+}
+
 func (b *backendMock) Engine() consensus.Engine { return nil }
 
 func (b *backendMock) RPCRpcReturnDataLimit() uint64 {
@@ -380,7 +384,7 @@ func (b *backendMock) GetVoteOnHash(ctx context.Context, starBlockNr uint64, end
 }
 
 func (b *backendMock) GetBorBlockReceipt(ctx context.Context, hash common.Hash) (*types.Receipt, error) {
-	//nolint: nilnil
+	// nolint: nilnil
 	return nil, nil
 }
 
