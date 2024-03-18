@@ -321,6 +321,8 @@ type BlobPool struct {
 	eventScope event.SubscriptionScope // Event scope to track and mass unsubscribe on termination
 
 	lock sync.RWMutex // Mutex protecting the pool during reorg handling
+
+	dropTxFeed event.Feed
 }
 
 // New creates a new blob transaction pool to gather, sort and filter inbound
@@ -1473,6 +1475,12 @@ func (p *BlobPool) updateLimboMetrics() {
 // starts sending event to the given channel.
 func (p *BlobPool) SubscribeTransactions(ch chan<- core.NewTxsEvent) event.Subscription {
 	return p.eventScope.Track(p.eventFeed.Subscribe(ch))
+}
+
+// SubscribeDropTxsEvent registers a subscription of DropTxsEvent and
+// starts sending event to the given channel.
+func (p *BlobPool) SubscribeDropTxsEvent(ch chan<- core.DropTxsEvent) event.Subscription {
+	return p.eventScope.Track(p.dropTxFeed.Subscribe(ch))
 }
 
 // Nonce returns the next nonce of an account, with all transactions executable
