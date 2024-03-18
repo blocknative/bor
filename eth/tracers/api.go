@@ -1331,7 +1331,7 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 			go func() {
 				<-deadlineCtx.Done()
 				if errors.Is(deadlineCtx.Err(), context.DeadlineExceeded) {
-					tracer.(Tracer).Stop(errors.New("execution timeout"))
+					tracer.Stop(errors.New("execution timeout"))
 				}
 			}()
 			defer cancel()
@@ -1406,8 +1406,6 @@ func (api *API) traceTx(ctx context.Context, message *core.Message, txctx *Conte
 	default:
 		panic(fmt.Sprintf("bad tracer type %T", tracer))
 	}
-
-	return tracer.GetResult()
 }
 
 // APIs return the collection of RPC services the tracer package offers.
