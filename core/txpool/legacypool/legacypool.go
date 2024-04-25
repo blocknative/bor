@@ -449,7 +449,7 @@ func (pool *LegacyPool) SubscribeTransactions(ch chan<- core.NewTxsEvent, reorgs
 // SubscribeDropTxsEvent registers a subscription of DropTxsEvent and
 // starts sending event to the given channel.
 func (pool *LegacyPool) SubscribeDropTxsEvent(ch chan<- core.DropTxsEvent) event.Subscription {
-	return pool.scope.Track(pool.dropTxFeed.Subscribe(ch))
+	return pool.dropTxFeed.Subscribe(ch)
 }
 
 // SetGasTip updates the minimum gas tip required by the transaction pool for a

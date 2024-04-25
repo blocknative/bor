@@ -1504,7 +1504,7 @@ func (p *BlobPool) SubscribeTransactions(ch chan<- core.NewTxsEvent, reorgs bool
 // SubscribeDropTxsEvent registers a subscription of DropTxsEvent and
 // starts sending event to the given channel.
 func (p *BlobPool) SubscribeDropTxsEvent(ch chan<- core.DropTxsEvent) event.Subscription {
-	return p.eventScope.Track(p.dropTxFeed.Subscribe(ch))
+	return p.dropTxFeed.Subscribe(ch)
 }
 
 // Nonce returns the next nonce of an account, with all transactions executable
