@@ -22,7 +22,7 @@ jobs:
           github-assets-uploader -logtostderr -f build/bin/bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
       - name: Build bootnode
         run: |
-          cd cmd/bootnode && /opt/go/1.19.5/bin/go build -o bootnode
+          cd cmd/bootnode && go build -o bootnode
           tar -czvf bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz bootnode
           echo $(md5sum bootnode | awk '{print $1}') > bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5
       - name: Upload bootnode to release page
