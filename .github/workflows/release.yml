@@ -7,9 +7,18 @@ on:
 jobs:
   arm64:
     name: Release Go Binary arm64
-    runs-on: [self-hosted, arm64]
+    runs-on: arc-runners-arm-stage
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.x
+      - uses: actions/checkout@v4
+        with:
+          repository: wangyoucao577/assets-uploader
+          path: assets-uploader
+      - name: build assets-uploader
+        run: cd assets-uploader/cmd/github-assets-uploader && go build && echo "ASSETS_UPLOADER_DIR=$(pwd)" > $GITHUB_ENV
       - name: Build bor
         run: |
           make bor
@@ -18,8 +27,8 @@ jobs:
           echo $(md5sum bor | awk '{print $1}') > bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5
       - name: Upload bor to release page
         run: |
-          github-assets-uploader -logtostderr -f build/bin/bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
-          github-assets-uploader -logtostderr -f build/bin/bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f build/bin/bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f build/bin/bor-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
       - name: Build bootnode
         run: |
           cd cmd/bootnode && go build -o bootnode
@@ -27,18 +36,18 @@ jobs:
           echo $(md5sum bootnode | awk '{print $1}') > bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5
       - name: Upload bootnode to release page
         run: |
-          github-assets-uploader -logtostderr -f cmd/bootnode/bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
-          github-assets-uploader -logtostderr -f cmd/bootnode/bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f cmd/bootnode/bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz -mediatype application/gzip -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
+          ${ASSETS_UPLOADER_DIR}/github-assets-uploader -logtostderr -f cmd/bootnode/bootnode-$(basename ${GITHUB_REF})-linux-arm64.tar.gz.md5 -mediatype text/plain -repo ${GITHUB_REPOSITORY} -token ${{ secrets.GITHUB_TOKEN }} -tag=$(basename ${GITHUB_REF}) -releasename="" -retry 3
 
   amd64:
     name: Release Go Binary amd64
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: 1.22.x
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: wangyoucao577/assets-uploader
           path: assets-uploader
